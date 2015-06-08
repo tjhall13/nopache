@@ -115,7 +115,7 @@ module.exports = {
     },
     cli: function(config) {
         // Create a simple server with the provided configuration
-        var server = new NopacheServer(config.base, config.port);
+        var server = new exports.NopacheServer(config.base, config.port);
         server.listen();
     }
 };
