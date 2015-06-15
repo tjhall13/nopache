@@ -7,7 +7,7 @@ var Buffer = require('buffer').Buffer;
 var _ = require('lodash');
 
 module.exports = {
-    NopacheServer: function(base, port, cgi) {
+    NopacheServer: function(base, port, php) {
         if(base.charAt(0) == '~') {
             base = path.join(process.env.HOME || process.env.HOMEPATH, base.substr(1));
         }
@@ -22,17 +22,8 @@ module.exports = {
             }
         };
         
-        if(cgi) {
-            if(cgi.mock) {
-                if(cgi.mock.php) {
-                    config.mock.php = cgi.mock.php;
-                }
-            }
-            if(cgi.mods) {
-                if(cgi.mods.php) {
-                    config.mods.php = cgi.mods.php;
-                }
-            }
+        if(php) {
+            config.mock.php = php;
         }
         
         function phpRequest(request, callback) {
@@ -48,19 +39,21 @@ module.exports = {
                     };
                     callback(res, null);
                     return false;
-                }
-                
-                if(entry.response) {
-                    if(Array.isArray(entry.response)) {
-                        entry.response.forEach(function(value, index, array) {
+                } else {
+                    if(Array.isArray(entry)) {
+                        entry.forEach(function(value, index, array) {
                             if(_.isEqual(value.input, request.data)) {
                                 result = value.output;
                             }
                         });
-                    } else if(typeof entry.response === 'object') {
-                        result = entry.response;
-                    } else if(typeof entry.response === 'function') {
-                        result = entry.response.call(request.data);
+                    } else if(typeof entry === 'object') {
+                        result = entry;
+                    } else if(typeof entry === 'function') {
+                        try {
+                            result = entry(request.data);
+                        } catch(err) {
+                            result = false;
+                        }
                     }
                 }
                 

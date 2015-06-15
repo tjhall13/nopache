@@ -13,47 +13,60 @@ var _createServer = http.createServer;
 var server;
 var html = fs.readFileSync('tests/html/index.html', 'utf8');
 
-var cgi = {
-    mock: {
-        php: {
-            '/php/test.php': {
-                response: [
-                    {
-                        input: {
-                            post: {
-                                data1: 'value1',
-                                data2: 'value2'
-                            }
-                        },
-                        output: {
-                            type: 'json',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            data: {
-                                data: 'value'
-                            }
-                        }
-                    },
-                    {
-                        input: {
-                            get: {
-                                arg1: 'value1'
-                            }
-                        },
-                        output: {
-                            type: 'text',
-                            headers: {
-                                'Content-Type': 'text/html'
-                            },
-                            data: '<html></html>'
-                        }
-                    }
-                ]
+var php = {
+    '/php/array.php': [
+        {
+            input: {
+                post: {
+                    data1: 'value1',
+                    data2: 'value2'
+                }
+            },
+            output: {
+                type: 'json',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: {
+                    data: 'value'
+                }
+            }
+        },
+        {
+            input: {
+                get: {
+                    arg1: 'value1'
+                }
+            },
+            output: {
+                type: 'text',
+                headers: {
+                    'Content-Type': 'text/html'
+                },
+                data: '<html></html>'
             }
         }
+    ],
+    '/php/default.php': {
+        type: 'text',
+        headers: {
+            'Content-Type': 'text/html'
+        },
+        data: '<html></html>'
     },
-    mods: false
+    '/php/function.php': function(input) {
+        if(input.get.arg1 != 'value1') {
+            throw 'invalid request';
+        } else {
+            return {
+                type: 'text',
+                headers: {
+                    'Content-Type': 'text/html'
+                },
+                data: '<html></html>'
+            };
+        }
+    }
 };
 
 module.exports = {
@@ -80,7 +93,7 @@ module.exports = {
             };
         };
         
-        server = new NopacheServer('tests/html/', 2400, cgi);
+        server = new NopacheServer('tests/html/', 2400, php);
         server.listen();
         
         done();
@@ -108,10 +121,13 @@ module.exports = {
         php: function(test) {
             framework.init(test);
             
-            framework.add({ url: '/php/test.php', method: 'POST', query: { data1: 'value1', data2: 'value2' } }, { status: 200, headers: { 'Content-Type': 'application/json' }, data: { data: 'value' } });
-            framework.add({ url: '/php/test.php', method: 'GET', query: { arg1: 'value1' } }, { status: 200, headers: { 'Content-Type': 'text/html' }, data: '<html></html>' });
-            framework.add({ url: '/php/test.php', method: 'GET', query: { } }, { status: 500, headers: { }, data: '' });
-            framework.add({ url: '/php/fake.php', method: 'GET' }, { status: 404, headers: { }, data: '' });
+            framework.add({ url: '/php/array.php', method: 'POST', query: { data1: 'value1', data2: 'value2' } }, { status: 200, headers: { 'Content-Type': 'application/json' }, data: { data: 'value' } });
+            framework.add({ url: '/php/array.php', method: 'GET', query: { arg1: 'value1' } }, { status: 200, headers: { 'Content-Type': 'text/html' }, data: '<html></html>' });
+            framework.add({ url: '/php/default.php', method: 'GET', query: { arg1: 'value1' } }, { status: 200, headers: { 'Content-Type': 'text/html' }, data: '<html></html>' });
+            framework.add({ url: '/php/function.php', method: 'GET', query: { arg1: 'value1' } }, { status: 200, headers: { 'Content-Type': 'text/html' }, data: '<html></html>' });
+            framework.add({ url: '/php/function.php', method: 'GET', query: { arg1: 'value2' } }, { status: 500, headers: { }, data: '' });
+            framework.add({ url: '/php/array.php', method: 'GET', query: { } }, { status: 500, headers: { }, data: '' });
+            framework.add({ url: '/php/error.php', method: 'GET' }, { status: 404, headers: { }, data: '' });
             
             framework.test();
         }
