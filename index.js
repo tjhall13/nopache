@@ -2,22 +2,115 @@ var http = require('http');
 var url = require('url');
 var path = require('path');
 var fs = require('fs');
+var Buffer = require('buffer').Buffer;
+
+var _ = require('lodash');
 
 module.exports = {
-    NopacheServer: function(base, port) { 
+    NopacheServer: function(base, port, cgi) {
         if(base.charAt(0) == '~') {
             base = path.join(process.env.HOME || process.env.HOMEPATH, base.substr(1));
         }
-        var pathname = path.resolve(base);
+        base = path.resolve(base);
         
-        function openRequest(request, callback) {
-            var filename = path.join(pathname, request);
+        var config = {
+            mock: {
+                php: false
+            },
+            mods: {
+                php: false
+            }
+        };
+        
+        if(cgi) {
+            if(cgi.mock) {
+                if(cgi.mock.php) {
+                    config.mock.php = cgi.mock.php;
+                }
+            }
+            if(cgi.mods) {
+                if(cgi.mods.php) {
+                    config.mods.php = cgi.mods.php;
+                }
+            }
+        }
+        
+        function phpRequest(request, callback) {
+            var res;
+            
+            if(config.mock.php) {
+                var entry = config.mock.php[request.path];
+                var result;
+                
+                if(!entry) {
+                    res = {
+                        status: 404
+                    };
+                    callback(res, null);
+                    return false;
+                }
+                
+                if(entry.response) {
+                    if(Array.isArray(entry.response)) {
+                        entry.response.forEach(function(value, index, array) {
+                            if(_.isEqual(value.input, request.data)) {
+                                result = value.output;
+                            }
+                        });
+                    } else if(typeof entry.response === 'object') {
+                        result = entry.response;
+                    } else if(typeof entry.response === 'function') {
+                        result = entry.response.call(request.data);
+                    }
+                }
+                
+                if(!result) {
+                    res = {
+                        status: 500
+                    };
+                    callback(res, null);
+                    return false;
+                }
+                
+                var response = {
+                    header: result.headers,
+                    body: ''
+                };
+                
+                switch(result.type) {
+                    case 'text':
+                    case 'data':
+                        response.body = new Buffer(result.data);
+                        break;
+                    case 'json':
+                        response.body = new Buffer(JSON.stringify(result.data));
+                        break;
+                }
+                
+                callback(null, response);
+                return true;
+            } else {
+                res = {
+                    status: 500
+                };
+                callback(res, null);
+                return false;
+            }
+        }
+        
+        function defaultRequest(request, callback) {
+            var filename = path.join(base, request.path);
+            
             var stat;
+            var res;
             
             try {
                 stat = fs.statSync(filename);
             } catch(err) {
-                callback('url does not exist', null);
+                res = {
+                    status: 404
+                };
+                callback(res, null);
                 return false;
             }
             
@@ -28,16 +121,25 @@ module.exports = {
                     try {
                         stat = fs.statSync(filename);
                     } catch(err) {
-                        callback('url does not exist', null);
+                        res = {
+                            status: 404
+                        };
+                        callback(res, null);
                         return false;
                     }
                     
                     if(!stat || !stat.isFile()) {
-                        callback('url does not exist', null);
+                        res = {
+                            status: 404
+                        };
+                        callback(res, null);
                         return false;
                     }
                 } else if(!stat.isFile()) {
-                    callback('url does not exist', null);
+                    res = {
+                        status: 404
+                    };
+                    callback(res, null);
                     return false;
                 }
                 
@@ -70,22 +172,61 @@ module.exports = {
                         header['Content-Type'] = type;
                     }
                     
-                    callback(err, {
+                    if(err) {
+                        res = {
+                            status: 404
+                        };
+                    }
+                    
+                    callback(res, {
                         header: header,
                         body: data
                     });
                 });
             } else {
-                callback('url does not exist', null);
+                res = {
+                    status: 404
+                };
+                callback(res, null);
                 return false;
             }
         }
         
+        function openRequest(request, callback) {
+            switch(path.extname(request.path)) {
+                case '.php':
+                    value = phpRequest(request, callback);
+                    break;
+                default:
+                    value = defaultRequest(request, callback);
+                    break;
+            }
+        }
+        
         var server = http.createServer(function(request, response) {
-            var requestURL = url.parse(request.url);
-            openRequest(requestURL.pathname, function(err, data) {
+            var requestURL = url.parse(request.url, true);
+            
+            var requestPath = requestURL.pathname;
+            var requestData = { };
+            
+            switch(request.method) {
+                case 'GET':
+                    requestData.get = requestURL.query;
+                    break;
+                case 'POST':
+                    requestData.post = requestURL.query;
+                    break;
+            }
+            
+            openRequest({
+                path: requestPath,
+                data: requestData
+            }, function(err, data) {
                 if(err) {
-                    response.writeHead(404);
+                    response.writeHead(err.status, err.header);
+                    if(err.body) {
+                        response.write(err.body);
+                    }
                     response.end();
                 } else {
                     response.writeHead(200, data.header);
@@ -95,15 +236,23 @@ module.exports = {
             });
         });
         
-        this.listen = function() {
-            server.listen(port);
-        }
+        this.listen = function(callback) {
+            server.listen(port, callback);
+        };
+        
+        this.close = function(callback) {
+            server.close(callback);
+        };
     },
     config: function(config) {
         // Package specific defaults
         var defaults = {
             base: '.',
-            port: 2400
+            port: 2400,
+            cgi: {
+                mock: false,
+                mods: false
+            }
         };
         
         // Merge options into defaults
@@ -115,7 +264,7 @@ module.exports = {
     },
     cli: function(config) {
         // Create a simple server with the provided configuration
-        var server = new this.NopacheServer(config.base, config.port);
+        var server = new this.NopacheServer(config.base, config.port, config.cgi);
         server.listen();
     }
 };
