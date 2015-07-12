@@ -3,15 +3,12 @@
   "version": "0.1.0",
   "description": "Node web server with nohp (Node php) and dynamic content mock interface.",
   "main": "index.js",
-  "scripts": {
-    "test": "test"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/tjhall13/nopache.git"
   },
   "dependencies": {
-    "lodash": "^3.9.3",
+    "lodash": "^3.9.3"
   },
   "devDependencies": {
     "grunt": "^0.4.5",

@@ -6,8 +6,8 @@ npm install nopache
 
 Node webserver that can simulate php requests.  Eventually nohp (A node php interpreter) will be incorportated into nopache to allow php files to be ran as they would on a full web server.
 
-#Usage
-##Nopache Server
+# Usage
+## Nopache Server
 ```javascript
 // Include NopacheServer in your project
 var NopacheServer = require('nopache').NopacheServer;
@@ -22,7 +22,7 @@ server.listen();
 server.close();
 ```
 
-##PHP Interface
+## PHP Interface
 ```javascript
 // Create a static response
 var php = {
@@ -84,7 +84,6 @@ var php = {
 var server = new NopacheServer(base, port, php);
 ```
 
-License
-===
+# License
 
 MIT
