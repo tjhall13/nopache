@@ -67,8 +67,9 @@ var php = {
 
 // Create a response that calls a javascript function
 var php = {
-    '/example.php': function(input) {
+    '/example.php': function(input, env) {
         // input == { get: { foo: 'value' } }
+        // env == { flat: { flatten: [Function], deepen: [Function] } }
         var output = {
             type: 'text',
             headers: {
