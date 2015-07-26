@@ -1,6 +1,6 @@
 {
   "name": "nopache",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Node web server with nohp (Node php) and dynamic content mock interface.",
   "main": "index.js",
   "repository": {

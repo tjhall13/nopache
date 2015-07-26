@@ -6,6 +6,8 @@ var Buffer = require('buffer').Buffer;
 
 var _ = require('lodash');
 
+var flat = require('./libs/flat.js');
+
 module.exports = {
     NopacheServer: function(base, port, php) {
         if(base.charAt(0) == '~') {
@@ -24,7 +26,14 @@ module.exports = {
         
         if(php) {
             config.mock.php = php;
+            if(php.init) {
+                php.init();
+            }
         }
+        
+        var env = {
+            flat: flat
+        };
         
         function phpRequest(request, callback) {
             var res;
@@ -50,7 +59,7 @@ module.exports = {
                         result = entry;
                     } else if(typeof entry === 'function') {
                         try {
-                            result = entry(request.data);
+                            result = entry(request.data, env);
                         } catch(err) {
                             result = false;
                         }
@@ -197,35 +206,45 @@ module.exports = {
         }
         
         var server = http.createServer(function(request, response) {
+            var data = new Buffer(0);
+            request.on('data', function(frame) {
+                if(typeof frame === 'string') {
+                    frame = new Buffer(frame, 'utf8');
+                }
+                data = Buffer.concat([data, frame], data.length + frame.length);
+            });
+            
             var requestURL = url.parse(request.url, true);
             
             var requestPath = requestURL.pathname;
             var requestData = { };
             
-            switch(request.method) {
-                case 'GET':
-                    requestData.get = requestURL.query;
-                    break;
-                case 'POST':
-                    requestData.post = requestURL.query;
-                    break;
-            }
-            
-            openRequest({
-                path: requestPath,
-                data: requestData
-            }, function(err, data) {
-                if(err) {
-                    response.writeHead(err.status, err.header);
-                    if(err.body) {
-                        response.write(err.body);
+            request.on('end', function() {
+                    switch(request.method) {
+                        case 'GET':
+                            requestData.get = requestURL.query;
+                            break;
+                        case 'POST':
+                            requestData.post = data;
+                            break;
                     }
-                    response.end();
-                } else {
-                    response.writeHead(200, data.header);
-                    response.write(data.body);
-                    response.end();
-                }
+                    
+                openRequest({
+                    path: requestPath,
+                    data: requestData
+                }, function(err, data) {
+                    if(err) {
+                        response.writeHead(err.status, err.header);
+                        if(err.body) {
+                            response.write(err.body);
+                        }
+                        response.end();
+                    } else {
+                        response.writeHead(200, data.header);
+                        response.write(data.body);
+                        response.end();
+                    }
+                });
             });
         });
         
@@ -242,10 +261,7 @@ module.exports = {
         var defaults = {
             base: '.',
             port: 2400,
-            cgi: {
-                mock: false,
-                mods: false
-            }
+            php: false
         };
         
         // Merge options into defaults
@@ -257,7 +273,7 @@ module.exports = {
     },
     cli: function(config) {
         // Create a simple server with the provided configuration
-        var server = new this.NopacheServer(config.base, config.port, config.cgi);
+        var server = new this.NopacheServer(config.base, config.port, config.php);
         server.listen();
     }
 };
