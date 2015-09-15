@@ -5,72 +5,76 @@ var fs = require('fs');
 var Buffer = require('buffer').Buffer;
 
 var _ = require('lodash');
-
 var flat = require('./libs/flat.js');
 
 module.exports = {
-    NopacheServer: function(base, port, php) {
+    NopacheServer: function(base, port, mods) {
         if(base.charAt(0) == '~') {
             base = path.join(process.env.HOME || process.env.HOMEPATH, base.substr(1));
         }
         base = path.resolve(base);
         
-        var config = {
-            mock: {
-                php: false
-            },
-            mods: {
-                php: false
-            }
-        };
-        
-        if(php) {
-            config.mock.php = php;
-            if(php.init) {
-                php.init();
-            }
+        if(!mods) {
+            mods = {
+                php: false,
+                mock: false
+            };
         }
         
         var env = {
-            flat: flat
+            flat: flat,
+            _: _
         };
         
+        if(mods.mock) {
+            if(mods.mock.init) {
+                mods.mock.init(env);
+            }
+        }
+        
         function phpRequest(request, callback) {
-            var res;
+            var err;
+            var requestURL = url.parse(request.url, true);
+            request.path = requestURL.path;
+            request.query = requestURL.query;
             
-            if(config.mock.php) {
-                var entry = config.mock.php[request.path];
+            if(mods.mock) {
+                var entry = mods.mock[request.path];
                 var result;
                 
                 if(!entry) {
-                    res = {
+                    err = {
                         status: 404
                     };
-                    callback(res, null);
+                    callback(err, null);
                     return false;
                 } else {
                     if(Array.isArray(entry)) {
-                        entry.forEach(function(value, index, array) {
-                            if(_.isEqual(value.input, request.data)) {
-                                result = value.output;
+                        err = {
+                            status: 400
+                        };
+                        for(var i = 0; i < entry.length; i++) {
+                            if(_.isEqual(entry[i].input, request.data)) {
+                                result = entry[i].output;
+                                break;
                             }
-                        });
+                        }
                     } else if(typeof entry === 'object') {
                         result = entry;
                     } else if(typeof entry === 'function') {
                         try {
                             result = entry(request.data, env);
-                        } catch(err) {
+                        } catch(e) {
                             result = false;
+                            err = {
+                                status: 500
+                            };
                         }
                     }
                 }
                 
                 if(!result) {
-                    res = {
-                        status: 500
-                    };
-                    callback(res, null);
+                    callback(err, null);
                     return false;
                 }
                 
@@ -92,16 +96,17 @@ module.exports = {
                 callback(null, response);
                 return true;
             } else {
-                res = {
+                // PHP scripting is not available yet
+                err = {
                     status: 500
                 };
-                callback(res, null);
+                callback(err, null);
                 return false;
             }
         }
         
         function defaultRequest(request, callback) {
-            var filename = path.join(base, request.path);
+            var filename = path.join(base, request.url);
             
             var stat;
             var res;
@@ -161,6 +166,12 @@ module.exports = {
                     case '.jpeg':
                         type = 'image/jpeg';
                         break;
+                    case '.png':
+                        type = 'image/png';
+                        break;
+                    case '.gif':
+                        type = 'image/gif';
+                        break;
                     default:
                         type = undefined;
                         break;
@@ -194,8 +205,26 @@ module.exports = {
             }
         }
         
+        function access(request, entries) {
+            if(entries.length == 1) {
+                return false;
+            } else {
+                var directory = entries.shift();
+                
+                if(directory === '') {
+                    return access(request, entries);
+                } else {
+                    return access(request, entries);
+                }
+            }
+        }
+        
         function openRequest(request, callback) {
-            switch(path.extname(request.path)) {
+            var entries = request.url.split('/');
+            
+            var result = access(request, entries);
+            
+            switch(path.extname(request.url)) {
                 case '.php':
                     value = phpRequest(request, callback);
                     break;
@@ -216,21 +245,18 @@ module.exports = {
             
             var requestURL = url.parse(request.url, true);
             
-            var requestPath = requestURL.pathname;
-            var requestData = { };
-            
             request.on('end', function() {
-                    switch(request.method) {
-                        case 'GET':
-                            requestData.get = requestURL.query;
-                            break;
-                        case 'POST':
-                            requestData.post = data;
-                            break;
-                    }
-                    
+                var requestData = { };
+                if(Object.keys(requestURL.query).length) {
+                    requestData.get = requestURL.query;
+                }
+                if(data.length || request.method == 'POST') {
+                    requestData.post = data;
+                }
+                
                 openRequest({
-                    path: requestPath,
+                    url: requestURL.pathname,
+                    method: request.method,
                     data: requestData
                 }, function(err, data) {
                     if(err) {
@@ -261,7 +287,10 @@ module.exports = {
         var defaults = {
             base: '.',
             port: 2400,
-            php: false
+            mods: {
+                php: false,
+                mock: false
+            }
         };
         
         // Merge options into defaults
@@ -273,7 +302,7 @@ module.exports = {
     },
     cli: function(config) {
         // Create a simple server with the provided configuration
-        var server = new this.NopacheServer(config.base, config.port, config.php);
+        var server = new this.NopacheServer(config.base, config.port, config.mods);
         server.listen();
     }
 };

@@ -6,6 +6,8 @@ var Buffer = require('buffer').Buffer;
 module.exports = function() {
     function Request(request) {
         var str = '';
+        var data = null;
+        
         if(request.query) {
             str = '?';
             for(var key in request.query) {
@@ -13,8 +15,22 @@ module.exports = function() {
             }
             str = str.substring(0, str.length - 1);
         }
+        if(request.data) {
+            data = request.data;
+        }
+        
         this.url = request.url + str;
         this.method = request.method;
+        
+        this.on = function(event, callback) {
+            if(event == 'data' && data) {
+                callback(data);
+            }
+            
+            if(event == 'end') {
+                callback();
+            }
+        };
     }
 
     function Response(test, expected, callback, params) {
@@ -30,7 +46,7 @@ module.exports = function() {
         
         var buffer = new Buffer(0);
         
-        test.httpEqual = function(expected, actual, message) {
+        test.httpEqual = function(actual, expected, message) {
             if(expected.status == actual.status) {
                 for(var header in expected.headers) {
                     if(expected.headers[header] != actual.headers[header]) {
@@ -70,7 +86,7 @@ module.exports = function() {
             
             test.httpEqual(expected, actual);
             
-            callback.apply(params);
+            callback.apply(this, params);
         };
     }
     
@@ -94,7 +110,7 @@ module.exports = function() {
         });
     };
     
-    this.test = function() {
+    this.begin = function() {
         sem = Semaphore.createSemaphore(testArray.length);
         context.expect(testArray.length);
         
