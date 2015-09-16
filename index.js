@@ -5,7 +5,6 @@ var fs = require('fs');
 var Buffer = require('buffer').Buffer;
 
 var _ = require('lodash');
-var flat = require('./libs/flat.js');
 
 module.exports = {
     NopacheServer: function(base, port, mods) {
@@ -21,15 +20,21 @@ module.exports = {
             };
         }
         
-        var env = {
-            flat: flat,
-            _: _
-        };
-        
-        if(mods.mock) {
-            if(mods.mock.init) {
-                mods.mock.init(env);
+        if(typeof mods.mock === 'string') {
+            try {
+                var mock = mods.mock;
+                if(mods.mock.charAt(0) == '~') {
+                    mock = path.join(process.env.HOME || process.env.HOMEPATH, mock.substr(1));
+                }
+                mods.mock = require(path.resolve(mock));
+            } catch(e) {
+                console.log(e);
+                mods.mock = false;
             }
+        }
+        
+        if(mods.mock && mods.mock.init) {
+            mods.mock.init();
         }
         
         function phpRequest(request, callback) {
@@ -63,7 +68,7 @@ module.exports = {
                         result = entry;
                     } else if(typeof entry === 'function') {
                         try {
-                            result = entry(request.data, env);
+                            result = entry(request.data);
                         } catch(e) {
                             result = false;
                             err = {
@@ -73,7 +78,12 @@ module.exports = {
                     }
                 }
                 
-                if(!result) {
+                if(result) {
+                    if(!result.type || !result.headers || !result.data) {
+                        callback({ status: 500 }, null);
+                        return false;
+                    }
+                } else {
                     callback(err, null);
                     return false;
                 }
