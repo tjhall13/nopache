@@ -35,8 +35,11 @@ String.prototype.args = function() {
     });
 }
 
-module.exports = function(data, access_hooks) {
-    var mods = [ ];
+module.exports = function(file, access_hooks) {
+    fs.statSync(file);
+    var data = fs.readFileSync(file, 'utf8');
+    
+    var mods = [];
     var hooks = { };
     for(var mod in access_hooks) {
         mods.push(mod);
@@ -62,39 +65,41 @@ module.exports = function(data, access_hooks) {
         };
     });
     
-    this.apply = function(path, env, current) {
-        var state = mods.reduce(function(state, mod) {
-            state[mod] = {
-                env: env,
-                current: current
-            };
-            Object.defineProperty(state[mod], 'path', {
-                get: function() {
-                    return path;
-                },
-                set: function(_path) {
-                    path = _path;
+    return {
+        apply: function(path, env, current) {
+            var state = mods.reduce(function(state, mod) {
+                state[mod] = {
+                    env: env,
+                    current: current
+                };
+                Object.defineProperty(state[mod], 'path', {
+                    get: function() {
+                        return path;
+                    },
+                    set: function(_path) {
+                        path = _path;
+                    }
+                });
+                return state;
+            }, { });
+            
+            for(var i = 0; i < commands.length; i++) {
+                var hook = hooks[commands[i].cmd];
+                if(hook && typeof hook.func == 'function') {
+                    try {
+                        hook.func.apply(state[hook.mod], commands[i].args);
+                    } catch(e) {
+                        return null;
+                    }
+                } else {
+                    env.error.log(commands[i].cmd, ': command could not be executed');
                 }
-            });
-            return state;
-        }, { });
-        
-        for(var i = 0; i < commands.length; i++) {
-            var hook = hooks[commands[i].cmd];
-            if(hook && typeof hook.func == 'function') {
-                try {
-                    hook.func.apply(state[hook.mod], commands[i].args);
-                } catch(e) {
-                    return null;
-                }
-            } else {
-                env.error.log(commands[i].cmd, ': command could not be executed');
             }
+            
+            if(path === '') {
+                path = 'index.html';
+            }
+            return path;
         }
-        
-        if(path === '') {
-            path = 'index.html';
-        }
-        return path;
     };
 };

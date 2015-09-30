@@ -8,4 +8,4 @@ var config = nopache.config({
     override: true,
     logfile: './temp/error.log'
 });
-nopache.cli(config);
+nopache.cli(config, { });

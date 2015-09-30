@@ -43,16 +43,6 @@ module.exports = {
         }
         
         var modules = new NopacheModules(config, mods);
-        modules.initialize_hooks({
-            error: {
-                log: function() {
-                    var message = Array.prototype.reduce.call(arguments, function(msg, str) {
-                        return msg + ' ' + str;
-                    }, '').substr(1) + '\n';
-                    errorStream.write(message);
-                }
-            }
-        });
         
         function requestHandler(request, response) {
             var env = new Environment(request, response, config);
@@ -103,8 +93,8 @@ module.exports = {
         
         return defaults;
     },
-    cli: function(config) {
-        var server = new this.NopacheServer(config, { });
+    cli: function(config, mods) {
+        var server = new this.NopacheServer(config, mods);
         server.listen();
     },
     version: function() {

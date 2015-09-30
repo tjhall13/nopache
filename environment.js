@@ -1,4 +1,5 @@
 var Buffer = require('buffer').Buffer;
+var url = require('url');
 
 module.exports = function(request, response, config) {
     var _status, _headers = { };
@@ -20,6 +21,20 @@ module.exports = function(request, response, config) {
         port: socket.remotePort,
         ipv6: socket.remoteFamily == 'IPv6'
     };
+    
+    Object.defineProperty(this.request, 'path', {
+        get: function() {
+            var req = url.parse(this.url);
+            return req.pathname.charAt(0) == '/' ? req.pathname : '/' + req.pathname;
+        }
+    });
+    
+    Object.defineProperty(this.request, 'query', {
+        get: function() {
+            var req = url.parse(this.url, true);
+            return req.query;
+        }
+    });
 
     this.response = {
         status: function(status) {

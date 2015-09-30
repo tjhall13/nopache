@@ -1,4 +1,3 @@
-var url = require('url');
 var fs = require('fs');
 var path = require('path');
 
@@ -32,24 +31,71 @@ module.exports = function(config, mods) {
         callback(null, code);
     };
     
-    var mod;
+    var name, mod;
     for(var prop in mods) {
-        mod = 'mod_' + prop;
+        name = 'mod_' + prop;
+        try {
+            mod = require('./contrib/' + name + '.js');
+        } catch(e) {
+            try {
+                mod = require(name);
+            } catch(e) {
+                try {
+                    if(typeof mods[prop] == 'string' && path.extname(mods[prop]) == '.js') {
+                        mod = require(mods[prop]);
+                    } else {
+                        mod = null;
+                        console.error('unable to load module', name);
+                    }
+                } catch(e) {
+                    mod = null;
+                    console.error('unable to load module', name);
+                }
+            }
+        }
+        if(mod != null) {
+            register_hooks(prop, mod);
+        }
+    }
+    
+    for(var mod in initialize_hooks) {
+        initialize_hooks[mod].call(config, mods[mod]);
+    }
+    
+    function register_hooks(name, mod) {
+        if(mod.register_initialize_hook) {
+            initialize_hooks[name] = mod.register_initialize_hook(config);
+        }
+        if(mod.register_access_hooks) {
+            access_hooks[name] = mod.register_access_hooks(config);
+        }
+        if(mod.register_process_hooks) {
+            var extensions = mod.register_process_hooks(config);
+            for(var ext in extensions) {
+                process_hooks[ext] = extensions[ext];
+            }
+        }
+        if(mod.register_response_hook) {
+            response_hooks[name] = mod.register_response_hook(config);
+        }
     }
     
     function resolve(path, env, current) {
         if(!current) {
-            current = config.base;
+            current = '';
         }
         
         if(config.override) {
             var data = '';
             try {
-                fs.statSync(current + '/.htaccess');
-                data = fs.readFileSync(current + '/.htaccess', 'utf8');
-            } catch(e) { }
-            var access = new htaccess(data, access_hooks);
-            path = access.apply(path, env, current);
+                var file = config.base + current + '/.htaccess';
+                var access = htaccess(file, access_hooks);
+                path = access.apply(path, env, current);
+            } catch(e) {
+                if(path === '') {
+                    path = 'index.html';
+                }
+            }
             if(path == null) {
                 return null;
             }
@@ -61,18 +107,23 @@ module.exports = function(config, mods) {
         
         var tokens = path.severe('/', 2);
         if(tokens.length > 1) {
-            return resolve(tokens[1], env, current + '/' + tokens[0]);
+            if(tokens[0] == '') {
+                return resolve(tokens[1], env, current);
+            } else {
+                return resolve(tokens[1], env, current + '/' + tokens[0]);
+            }
         } else {
             return current + '/' + tokens[0];
         }
     }
     
     function default_handler(env, callback) {
-        var ext = path.extname(env.request.path);
+        var pathname = config.base + env.request.path;
+        var ext = path.extname(pathname);
         try {
-            var stat = fs.statSync(env.request.path);
+            var stat = fs.statSync(pathname);
             if(stat && !stat.isDirectory()) {
-                fs.readFile(env.request.path, function(err, data) {
+                fs.readFile(pathname, function(err, data) {
                     if(err) {
                         env.error.log(err);
                         env.response.status(500);
@@ -98,25 +149,8 @@ module.exports = function(config, mods) {
         }
     }
     
-    this.initialize_hooks = function(env) {
-        for(var mod in initialize_hooks) {
-            try {
-                initialize_hooks[mod].handler.call(initialize_hooks[mod].context);
-            } catch(e) {
-                env.error.log(mod + ': ' + e);
-            }
-        }
-    };
-    
     this.request_hooks = function(env, callback) {
-        var req = url.parse(env.request.url, true);
-        
-        var path = req.pathname;
-        if(path.charAt(0) == '/') {
-            path = path.substr(1);
-        }
-        path = resolve(env.request.url, env);
-        env.request.path = path;
+        env.request.url = resolve(env.request.url, env);
         
         callback(null, env);
     };
