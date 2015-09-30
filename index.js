@@ -26,6 +26,10 @@ module.exports = {
             });
         }
         
+        if(!mods) {
+            mods = { };
+        }
+        
         var server;
         if(config.ssl) {
             var options = {
