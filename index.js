@@ -9,6 +9,8 @@ var Sync = require('sync');
 var NopacheModules = require('./modules.js');
 var Environment = require('./environment.js');
 
+var pkg = require('./package.json');
+
 module.exports = {
     NopacheServer: function(config, mods) {
         if(config.base.charAt(0) == '~') {
@@ -100,15 +102,8 @@ module.exports = {
     cli: function(config) {
         var server = new this.NopacheServer(config, { });
         server.listen();
+    },
+    version: function() {
+        return pkg.version;
     }
 };
-
-var nopache = module.exports;
-
-var config = nopache.config({
-    base: './test/',
-    port: 2400,
-    override: true,
-    logfile: './error.log'
-});
-nopache.cli(config);
