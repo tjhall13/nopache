@@ -31,11 +31,13 @@ module.exports = function(config, mods) {
         callback(null, code);
     };
     
+    var mod_information = { };
+    
     var name, mod;
     for(var prop in mods) {
         name = 'mod_' + prop;
         try {
-            mod = require('./contrib/' + name + '.js');
+            mod = require('./contrib/' + name);
         } catch(e) {
             try {
                 mod = require(name);
@@ -54,17 +56,13 @@ module.exports = function(config, mods) {
             }
         }
         if(mod != null) {
-            register_hooks(prop, mod);
+            initialize_mods(prop, mod, mods[prop]);
         }
     }
     
-    for(var mod in initialize_hooks) {
-        initialize_hooks[mod].call(config, mods[mod]);
-    }
-    
-    function register_hooks(name, mod) {
+    function initialize_mods(name, mod, arg) {
         if(mod.register_initialize_hook) {
-            initialize_hooks[name] = mod.register_initialize_hook(config);
+            mod.register_initialize_hook(arg);
         }
         if(mod.register_access_hooks) {
             access_hooks[name] = mod.register_access_hooks(config);
@@ -77,6 +75,11 @@ module.exports = function(config, mods) {
         }
         if(mod.register_response_hook) {
             response_hooks[name] = mod.register_response_hook(config);
+        }
+        
+        mod_information[name] = { };
+        if(mod.version) {
+            mod_information[name].version = mod.version();
         }
     }
     
