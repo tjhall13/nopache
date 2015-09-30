@@ -1,0 +1,32 @@
+{
+  "name": "nopache",
+  "version": "0.9.0",
+  "description": "Nopache is a light weight webserver with the ability to easily configure options and plugin modules",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "sync": "^0.2.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tjhall13/nopache.git"
+  },
+  "keywords": [
+    "nopache",
+    "apache",
+    "mock",
+    "webserver"
+  ],
+  "author": "Trevor Hall",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tjhall13/nopache/issues"
+  },
+  "homepage": "https://github.com/tjhall13/nopache#readme"
+}
