@@ -1,0 +1,5 @@
+RewriteEngine On
+RewriteBase /access/
+
+RewriteRule ^/test$ /test/ [R]
+RewriteRule ^/test/$ test.html
