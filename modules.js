@@ -56,7 +56,7 @@ module.exports = function(config, mods) {
                 }
             }
         }
-        if(mod != null) {
+        if(mod !== null) {
             initialize_mods(prop, mod, mods[prop]);
         }
     }
@@ -103,7 +103,7 @@ module.exports = function(config, mods) {
                     path = 'index.html';
                 }
             }
-            if(path == null) {
+            if(path === null) {
                 return null;
             }
         } else {
@@ -114,7 +114,7 @@ module.exports = function(config, mods) {
         
         var tokens = path.severe('/', 2);
         if(tokens.length > 1) {
-            if(tokens[0] == '') {
+            if(tokens[0] === '') {
                 return resolve(tokens[1], env, current);
             } else {
                 return resolve(tokens[1], env, current + '/' + tokens[0]);

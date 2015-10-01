@@ -6,7 +6,7 @@ var stream = require('stream');
 
 var Sync = require('sync');
 
-var NopacheModules = require('./modules.js');
+var Modules = require('./modules.js');
 var Environment = require('./environment.js');
 
 var pkg = require('./package.json');
@@ -42,7 +42,7 @@ module.exports = {
             server = http.createServer(requestHandler);
         }
         
-        var modules = new NopacheModules(config, mods);
+        var modules = new Modules(config, mods);
         
         function requestHandler(request, response) {
             var env = new Environment(request, response, config);

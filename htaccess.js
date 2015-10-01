@@ -33,7 +33,7 @@ String.prototype.args = function() {
     return output.filter(function(arg) {
         return arg !== '';
     });
-}
+};
 
 module.exports = function(file, access_hooks) {
     fs.statSync(file);
@@ -52,7 +52,7 @@ module.exports = function(file, access_hooks) {
     }
     
     var lines = data.split('\n').filter(function(line) {
-        return line != '';
+        return line !== '';
     });
     
     var regex = /^([a-zA-Z0-9]+)(?:[ ](.*))$/;

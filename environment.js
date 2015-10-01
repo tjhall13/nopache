@@ -106,5 +106,5 @@ module.exports = function(request, response, config) {
             }, '').substr(1) + '\n';
             error.write(message);
         }
-    }
+    };
 };
