@@ -25,7 +25,7 @@ String.prototype.severe = function(delimeter, count) {
 module.exports = function(config, mods) {
     var initialize_hooks = { };
     var access_hooks = { };
-    var process_hooks = { };
+    var process_hooks = [ ];
     var response_hooks = { };
     var error_hook = function(code, env, callback) {
         callback(null, code);
@@ -68,10 +68,10 @@ module.exports = function(config, mods) {
             access_hooks[name] = mod.register_access_hooks(config);
         }
         if(mod.register_process_hooks) {
-            var extensions = mod.register_process_hooks(config);
-            for(var ext in extensions) {
-                process_hooks[ext] = extensions[ext];
-            }
+            var handlers = mod.register_process_hooks(config);
+            handlers.forEach(function(value) {
+                process_hooks.push(value);
+            });
         }
         if(mod.register_response_hook) {
             response_hooks[name] = mod.register_response_hook(config);
@@ -91,7 +91,7 @@ module.exports = function(config, mods) {
         if(config.override) {
             var data = '';
             try {
-                var file = config.base + current + '/.htaccess';
+                var file = env.server.base + current + '/.htaccess';
                 var access = htaccess(file, access_hooks);
                 path = access.apply(path, env, current);
             } catch(e) {
@@ -121,7 +121,7 @@ module.exports = function(config, mods) {
     }
     
     function default_handler(env, callback) {
-        var pathname = config.base + env.request.path;
+        var pathname = env.server.base + env.request.path;
         var ext = path.extname(pathname);
         try {
             var stat = fs.statSync(pathname);
@@ -161,9 +161,16 @@ module.exports = function(config, mods) {
     this.process_hooks = function(env, callback) {
         if(!env.response.status()) {
             try {
-                var ext = path.extname(env.request.path);
-                var handler = process_hooks[ext];
-                if(!handler || !handler(env, callback)) {
+                var pathname = env.request.path;
+                var handled;
+                for(var i = 0; i < process_hooks.length; i++) {
+                    handled = false;
+                    if(process_hooks[i].regex.test(pathname)) {
+                        handled = process_hooks[i].handler(env, callback);
+                        if(handled) { break; }
+                    }
+                }
+                if(!handled) {
                     default_handler(env, callback);
                 }
             } catch(e) {

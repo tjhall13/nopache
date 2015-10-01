@@ -35,6 +35,13 @@ module.exports = function(request, response, config) {
             return req.query;
         }
     });
+    
+    Object.defineProperty(this.request, 'auth', {
+        get: function() {
+            var req = url.parse(this.url);
+            return req.auth;
+        }
+    });
 
     this.response = {
         status: function(status) {
@@ -88,7 +95,8 @@ module.exports = function(request, response, config) {
         base: config.base,
         addr: socket.localAddress,
         port: socket.localPort,
-        protocol: config.ssl ? 'https' : 'http'
+        
+        ssl: config.ssl
     };
     
     this.error = {
