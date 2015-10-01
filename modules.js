@@ -24,6 +24,7 @@ String.prototype.severe = function(delimeter, count) {
 
 module.exports = function(config, mods) {
     var initialize_hooks = { };
+    var request_hooks = { };
     var access_hooks = { };
     var process_hooks = [ ];
     var response_hooks = { };
@@ -63,6 +64,9 @@ module.exports = function(config, mods) {
     function initialize_mods(name, mod, arg) {
         if(mod.register_initialize_hook) {
             mod.register_initialize_hook(arg);
+        }
+        if(mod.register_request_hook) {
+            request_hooks[name] = mod.register_request_hook(config);
         }
         if(mod.register_access_hooks) {
             access_hooks[name] = mod.register_access_hooks(config);
@@ -153,8 +157,16 @@ module.exports = function(config, mods) {
     }
     
     this.request_hooks = function(env, callback) {
+        for(var mod in request_hooks) {
+            try {
+                request_hooks[mod].handler.sync(request_hooks[mod].context, env);
+            } catch(e) {
+                env.error.log(mod + ':', e);
+                env.response.status(500);
+                error_hook(500, env, callback);
+            }
+        }
         env.request.url = resolve(env.request.url, env);
-        
         callback(null, env);
     };
     
