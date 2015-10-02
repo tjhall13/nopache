@@ -1,8 +1,7 @@
 module.exports = {
     '/this/is/a/path.php': {
         headers: {
-            'Content-Type': 'text/plain',
-            'Content-Length': 14
+            'Content-Type': 'text/plain'
         },
         data: 'this is a test'
     },
@@ -16,8 +15,7 @@ module.exports = {
         },
         response: {
             headers: {
-                'Content-Type': 'text/plain',
-                'Content-Length': 20
+                'Content-Type': 'text/plain'
             },
             data: 'this is another test'
         }
@@ -25,8 +23,7 @@ module.exports = {
         request: { },
         response: {
             headers: {
-                'Content-Type': 'text/plain',
-                'Content-Length': 24
+                'Content-Type': 'text/plain'
             },
             data: 'this is default response'
         }

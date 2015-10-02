@@ -10,21 +10,25 @@ function Mock() {
     function handle_object(object, env, callback) {
         env.response.status(200);
         env.response.headers(object.headers);
+        var data;
         switch(typeof object.data) {
             case 'string':
-                env.response.data(new Buffer(object.data));
+                data = new Buffer(object.data);
                 break;
             case 'object':
             if(Buffer.isBuffer(object.data)) {
-                env.response.data(object.data);
+                data = object.data;
             } else {
                 env.response.headers({ 'Content-Type': 'application/json' }, true);
-                env.response.data(new Buffer(JSON.stringify(object.data)));
+                data = new Buffer(JSON.stringify(object.data));
             }
                 break;
             default:
+                data = new Buffer(0);
                 break;
         }
+        env.response.headers({ 'Content-Length': data.length }, true);
+        env.response.data(data);
         callback(null, env);
         return true;
     }
