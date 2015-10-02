@@ -80,9 +80,9 @@ function handle_request(mock, env, callback) {
 var hooks = { };
 
 module.exports = {
-    register_initialize_hook: function(arg) {
+    register_initialize_hook: function(config, arg) {
         try {
-            var mocks = require(arg);
+            var mocks = require(path.resolve(arg));
             var ext;
             var handler = function(env, callback) {
                 var mock = mocks[env.request.path];
