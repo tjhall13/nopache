@@ -1,25 +1,26 @@
 {
   "name": "nopache",
-  "version": "0.1.4",
-  "description": "Node web server with nohp (Node php) and dynamic content mock interface.",
+  "version": "0.9.0",
+  "description": "Nopache is a light weight webserver with the ability to easily configure options and plugin modules",
   "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/tjhall13/nopache.git"
-  },
   "dependencies": {
-    "lodash": "^3.9.3"
+    "sync": "^0.2.5"
   },
   "devDependencies": {
     "grunt": "^0.4.5",
-    "grunt-contrib-jshint": "^0.11.2",
+    "grunt-contrib-jshint": "^0.11.3",
     "grunt-contrib-nodeunit": "^0.4.1",
     "semaphore": "^1.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tjhall13/nopache.git"
   },
   "keywords": [
     "nopache",
     "apache",
-    "php"
+    "mock",
+    "webserver"
   ],
   "author": "Trevor Hall",
   "license": "MIT",

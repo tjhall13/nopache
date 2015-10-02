@@ -11,17 +11,30 @@
 module.exports = function(grunt) {
     grunt.initConfig({
         jshint: {
-            all: [
-                'Gruntfile.js',
+            core: [
                 'index.js',
-                'tests/*.js'
+                'lib/*.js'
+            ],
+            contrib: [
+                'contrib/lib/*.js',
+                'contrib/mod_*/*.js'
+            ],
+            tests: [
+                'test/*.js',
+                'test/**/*.js',
+                'contrib/mod_*/test/*.js'
             ],
             options: {
                 node: true
             }
         },
         nodeunit: {
-            all: ['tests/*.js']
+            core: [
+                'test/test.js'
+            ],
+            contrib: [
+                'contrib/mod_*/test/test.js'
+            ]
         }
     });
     

@@ -1,4 +1,7 @@
-Gruntfile.js
-tests/*
-utils/*
+temp/
+live
+html/
+test/
 .git*
+.npm*
+Gruntfile.js
