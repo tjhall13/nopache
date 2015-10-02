@@ -6,8 +6,8 @@ var stream = require('stream');
 
 var Sync = require('sync');
 
-var Modules = require('./modules.js');
-var Environment = require('./environment.js');
+var Modules = require('./lib/modules.js');
+var Environment = require('./lib/environment.js');
 
 var pkg = require('./package.json');
 

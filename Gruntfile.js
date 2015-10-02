@@ -11,18 +11,12 @@
 module.exports = function(grunt) {
     grunt.initConfig({
         jshint: {
-            build: [
-                'Gruntfile.js'
-            ],
             core: [
                 'index.js',
-                'modules.js',
-                'environment.js',
-                'htaccess.js',
-                'mime.js'
+                'lib/*.js'
             ],
             contrib: [
-                'contrib/libs/*.js'
+                'contrib/lib/*.js'
             ],
             tests: [
                 'test/*.js',
