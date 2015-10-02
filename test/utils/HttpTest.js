@@ -4,8 +4,6 @@ var Semaphore = {
 var Buffer = require('buffer').Buffer;
 
 module.exports = function() {
-    var n = 1;
-    
     function Request(request) {
         var str = '';
         var data = null;
@@ -17,8 +15,8 @@ module.exports = function() {
             }
             str = str.substring(0, str.length - 1);
         }
-        if(request.data) {
-            data = request.data;
+        if(request.body) {
+            data = request.body;
         }
         
         this.httpVersion = '1.1';
@@ -90,6 +88,7 @@ module.exports = function() {
             
             switch(actual.headers['Content-Type']) {
                 case 'text/html':
+                case 'text/plain':
                     actual.data = buffer.toString('utf8');
                     break;
                 case 'application/json':
@@ -123,20 +122,28 @@ module.exports = function() {
         });
     };
     
-    this.begin = function(callback) {
-        sem = Semaphore.createSemaphore(testArray.length);
-        context.expect(testArray.length);
-        
-        testArray.forEach(function(value, index, array) {
-            sem.take(function() {
-                self.run(value.request, value.response);
+    this.begin = function(expect, callback) {
+        if(callback === undefined && typeof expect == 'function') {
+            callback = expect;
+            expect = 0;
+        }
+        if(testArray.length) {
+            sem = Semaphore.createSemaphore(testArray.length);
+            context.expect(testArray.length + expect);
+            
+            testArray.forEach(function(value, index, array) {
+                sem.take(function() {
+                    self.run(value.request, value.response);
+                });
             });
-        });
-        
-        sem.take(testArray.length, function() {
-            sem.leave(testArray.length);
+            
+            sem.take(testArray.length, function() {
+                sem.leave(testArray.length);
+                callback(context);
+            });
+        } else {
             callback(context);
-        });
+        }
     };
     
     this.run = function() { };

@@ -3,6 +3,9 @@ var fs = require('fs');
 var path = require('path');
 
 var NopacheServer = require('../index.js').NopacheServer;
+var flat = require('../contrib/lib/flat.js');
+var request = require('../contrib/lib/request.js');
+
 var HttpTest = require('./utils/HttpTest.js');
 
 // Create asynchronous testing framework
@@ -68,6 +71,81 @@ module.exports = {
                 server.close();
                 test.done();
             });
+        },
+        
+        modules: function(test) {
+            var mod = require('./mod_test.js');
+            mod.initialize(test);
+            
+            var server = new NopacheServer({
+                base: path.resolve('./test/html/'),
+                port: 80,
+                override: true,
+                logfile: 2
+            }, {
+                './test/mod_test.js': true
+            });
+            
+            server.listen();
+            
+            framework.init(test);
+            
+            framework.add({ url: '/mod/query?value=1', method: 'GET' }, { status: 200, headers: { 'Content-Type': 'text/plain', 'Content-Length': 24 }, data: 'this is the modules test' });
+            
+            framework.begin(9, function(test) {
+                server.close();
+                test.done();
+            });
+        },
+        
+        flat: function(test) {
+            test.expect(2);
+            
+            var output = flat.deepen({
+                'test[0]': 'a',
+                'test[1]': 'b',
+                'test[2][prop]': 'c',
+                'test[2][attr]': 'd',
+                'test[2][expr][0]': 'e',
+                'test[2][expr][1]': 'f'
+            });
+            test.deepEqual({
+                test: [
+                    'a',
+                    'b',
+                    {
+                        prop: 'c',
+                        attr: 'd',
+                        expr: [
+                            'e',
+                            'f'
+                        ]
+                    }
+                ]
+            }, output);
+            
+            var input = flat.flatten({
+                test: {
+                    arr: [
+                        'a',
+                        'b',
+                        'c',
+                        {
+                            obj: {
+                                value: 'd'
+                            }
+                        }
+                    ]
+                }
+            });
+            test.deepEqual({
+                'test[arr][0]': 'a',
+                'test[arr][1]': 'b',
+                'test[arr][2]': 'c',
+                'test[arr][3][obj][value]': 'd'
+            }, input);
+            
+            test.done();
         }
     }
 };

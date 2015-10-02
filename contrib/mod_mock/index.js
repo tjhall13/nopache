@@ -2,6 +2,7 @@ var path = require('path');
 var Buffer = require('buffer').Buffer;
 
 var request = require('../lib/request.js');
+var pkg = require('./package.json');
 
 function handle_object(object, env, callback) {
     env.response.status(200);
@@ -72,7 +73,6 @@ function handle_request(mock, env, callback) {
             break;
         default:
             return false;
-            break;
     }
     return true;
 }
@@ -84,17 +84,18 @@ module.exports = {
         try {
             var mocks = require(arg);
             var ext;
+            var handler = function(env, callback) {
+                var mock = mocks[env.request.path];
+                if(mock) {
+                    return handle_request(mock, env, callback);
+                } else {
+                    return false;
+                }
+            };
             for(var file in mocks) {
                 ext = path.extname(file);
                 if(!hooks[ext]) {
-                    hooks[ext] = function(env, callback) {
-                        var mock = mocks[env.request.path];
-                        if(mock) {
-                            return handle_request(mock, env, callback);
-                        } else {
-                            return false;
-                        }
-                    };
+                    hooks[ext] = handler;
                 }
             }
         } catch(e) {
@@ -113,6 +114,6 @@ module.exports = {
     },
     
     version: function() {
-        return '0.1.0';
+        return pkg.version;
     }
 };

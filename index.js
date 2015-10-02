@@ -19,7 +19,21 @@ module.exports = {
         config.base = path.resolve(config.base);
         
         if(config.logfile) {
-            config.logfile = fs.createWriteStream(config.logfile);
+            if(config.logfile == 'stdout' || config.logfile === 1) {
+                config.logfile = {
+                    write: function(data) {
+                        console.log(data);
+                    }
+                };
+            } else if(config.logfile == 'stderr' || config.logfile === 2) {
+                config.logfile = {
+                    write: function(data) {
+                        console.error(data);
+                    }
+                };
+            } else {
+                config.logfile = fs.createWriteStream(config.logfile);
+            }
         } else {
             config.logfile = new stream.Writable({
                 write: function(chunk, encoding, next) { }
