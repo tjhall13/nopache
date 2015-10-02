@@ -11,17 +11,29 @@
 module.exports = function(grunt) {
     grunt.initConfig({
         jshint: {
-            all: [
-                'Gruntfile.js',
+            build: [
+                'Gruntfile.js'
+            ],
+            core: [
                 'index.js',
                 'modules.js',
                 'environment.js',
                 'htaccess.js',
                 'mime.js'
             ],
+            contrib: [
+                'contrib/libs/*.js'
+            ],
+            tests: [
+                'test/*.js',
+                'test/**/*.js'
+            ],
             options: {
                 node: true
             }
+        },
+        nodeunit: {
+            all: ['test/test.js']
         }
     });
     
@@ -30,5 +42,5 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-nodeunit');
 
     // By default, lint and run all tests.
-    grunt.registerTask('default', ['jshint']);
+    grunt.registerTask('default', ['jshint', 'nodeunit']);
 };
