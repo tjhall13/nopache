@@ -16,6 +16,10 @@ function parseData(request) {
 
 module.exports = {
     parse: function(env) {
+        if(!env.request.headers.cookie) {
+            env.request.headers.cookie = '';
+        }
+        
         var requestData = {
             method: env.request.method.toLowerCase(),
             get: env.request.query,
@@ -63,7 +67,7 @@ module.exports = {
                 return expected == actual;
             }
         } else {
-            return false;
+            return expected == actual;
         }
     }
 };

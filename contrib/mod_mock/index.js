@@ -46,13 +46,13 @@ function Mock() {
     }
 
     function handle_array(arr, data, env, callback) {
-        arr.forEach(function(value) {
-            if(request.compare(value.request, data)) {
-                return handle_object(value.response, env, callback);
+        for(var i = 0; i < arr.length; i++) {
+            if(request.compare(arr[i].request, data)) {
+                return handle_object(arr[i].response, env, callback);
             }
-        });
+        }
         
-        env.response.status(404);
+        env.response.status(400);
         callback(null, env);
         return false;
     }
