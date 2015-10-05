@@ -210,7 +210,9 @@ module.exports = {
             };
             
             var error = {
-                log: function(msg) { console.error(msg); }
+                log: function(msg) {
+                    test.ok(false, msg);
+                }
             };
             
             function valid(err, data) {
@@ -240,13 +242,3 @@ module.exports = {
         test.done();
     }
 };
-
-/*
-
-module.exports.mock({
-    expect: function() { },
-    ok: function() { },
-    done: function() { }
-});
-
-*/
