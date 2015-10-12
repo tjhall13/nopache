@@ -211,7 +211,10 @@ module.exports = {
             
             var error = {
                 log: function(msg) {
-                    test.ok(false, msg);
+                    var message = Array.prototype.reduce.call(arguments, function(msg, str) {
+                        return msg + ' ' + str;
+                    }, '').substr(1);
+                    test.ok(false, message);
                 }
             };
             

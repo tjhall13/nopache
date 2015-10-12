@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+
+'use strict';
+
+var path = require('path');
+var fs = require('fs');
+var nopt = require('nopt');
+
+var nopache = require('../index.js');
+var pkg = require('../package.json');
+
+function help() {
+  [
+    'Usage: nopache [options]',
+    'Options:',
+    '  --version -v         Display version information.',
+    '  --help -h            Show this help.',
+    '  --config <file>      Load <file> as a json config file for the web server.',
+    '  --port -p <port>     Host web server on <port>.',
+    '  --base -b <dir>      Use <dir> as base directory.',
+    '',
+    'To connect. Simply connect your browser to localhost:<port>'
+  ].forEach(function(str) { process.stdout.write(str + '\n'); });
+    process.exit();
+}
+
+function info() {
+    process.stdout.write('nopache: ' + pkg.description + ' (v' + pkg.version + ')\n');
+}
+
+function version() {
+    process.stdout.write('nopache v' + pkg.version + '\n');
+    process.exit();
+}
+
+function fatal(msg, code) {
+    info();
+    process.stdout.write('Fatal error: ' + msg + '\n');
+    process.exit(code);
+}
+
+var cli = { };
+Object.defineProperty(cli, 'options', {
+    get: function() {
+        return nopt({
+            help: Boolean,
+            version: Boolean,
+            config: path,
+            port: Number,
+            base: path
+        }, {
+            h: '--help',
+            v: '--version',
+            p: '--port',
+            b: '--base'
+        }, process.argv, 2);
+    }
+});
+
+process.title = 'nopache';
+
+if(cli.options.version) {
+    version();
+}
+
+if(cli.options.help) {
+    help();
+}
+
+var config = { };
+var mods = { };
+
+if(cli.options.config) {
+    var configFile = path.join(process.cwd(), cli.options.config);
+
+    if(fs.existsSync(configFile)) {
+        config = JSON.parse(fs.readFileSync(configFile));
+        if(config.mods) {
+            mods = config.mods;
+            delete config.mods;
+        }
+    } else {
+        console.error('Nopache configuration file cannot be found: ' + cli.options.config);
+        console.log('Using defaults...');
+    }
+}
+
+if(cli.options.base) {
+    config.base = cli.options.base;
+}
+
+if(cli.options.port) {
+    config.port = cli.options.port;
+}
+
+config = nopache.config(config);
+
+console.log('Listening on ' + config.port + '...');
+nopache.cli(config, mods);

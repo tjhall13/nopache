@@ -18,8 +18,8 @@ module.exports = {
                 test.equal(arg1, 'arg1');
                 test.equal(arg2, '"argument 2"');
                 
-                test.equal(this.current, '/mod');
-                test.equal(this.path, 'query?value=1');
+                test.equal(this.url.current, '/mod');
+                test.equal(this.url.path, 'query?value=1');
             }
         };
     },

@@ -1,0 +1,14 @@
+# line comment
+ # irregular line comment
+    
+
+BasicCommand arg1 "argument 2"
+
+<AdvancedCommand mod_rewrite.c>
+    BasicCommand arg1 "argument 2"
+    <NestedCommand>
+        BasicCommand arg1 "argument 2"
+    </NestedCommand>
+    
+    BasicCommand arg1 "argument 2"
+</AdvancedCommand>

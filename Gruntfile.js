@@ -11,6 +11,9 @@
 module.exports = function(grunt) {
     grunt.initConfig({
         jshint: {
+            cli: [
+                'bin/nopache'
+            ],
             core: [
                 'index.js',
                 'lib/*.js'
