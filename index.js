@@ -70,6 +70,7 @@ module.exports = {
             
             request.on('end', function() {
                 Sync(function() {
+                    modules.begin_request();
                     try {
                         modules.request_hooks.sync(modules, env);
                         modules.process_hooks.sync(modules, env);
@@ -80,6 +81,7 @@ module.exports = {
                         env.response.headers({ });
                         env.response.data(new Buffer(0));
                     }
+                    modules.end_request();
                     env.response.end();
                 });
             });

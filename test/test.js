@@ -84,16 +84,13 @@ module.exports = {
         },
         
         loader: function(test) {
-            var mod = require('./mod_test.js');
-            mod.initialize(test);
-            
             var server = new NopacheServer({
                 base: path.resolve('./test/html/'),
                 port: 80,
                 override: true,
                 logfile: 2
             }, {
-                './test/mod_test.js': true
+                './test/mod_test.js': test
             });
             
             server.listen();
@@ -102,7 +99,7 @@ module.exports = {
             
             framework.add({ url: '/mod/query?value=1', method: 'GET' }, { status: 200, headers: { 'Content-Type': 'text/plain', 'Content-Length': 24 }, data: 'this is the modules test' });
             
-            framework.begin(9, function(test) {
+            framework.begin(8, function(test) {
                 server.close();
                 test.done();
             });
@@ -177,7 +174,7 @@ module.exports = {
                         return true;
                     }
                 }
-            });
+            }, {});
             access.apply('', env, '');
             
             test.ok(true);

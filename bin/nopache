@@ -71,8 +71,8 @@ var config = { };
 var mods = { };
 
 if(cli.options.config) {
-    var configFile = path.join(process.cwd(), cli.options.config);
-
+    var configFile = cli.options.config;
+    
     if(fs.existsSync(configFile)) {
         config = JSON.parse(fs.readFileSync(configFile));
         if(config.mods) {
@@ -80,7 +80,7 @@ if(cli.options.config) {
             delete config.mods;
         }
     } else {
-        console.error('Nopache configuration file cannot be found: ' + cli.options.config);
+        console.error('Nopache configuration file cannot be found: ' + configFile);
         console.log('Using defaults...');
     }
 }

@@ -1,8 +1,8 @@
 var test;
 
 module.exports = {
-    register_initialize_hook: function(config, arg) {
-        test.ok(arg);
+    initialize: function(config, arg) {
+        test = arg;
     },
     
     register_request_hook: function(config) {
@@ -49,9 +49,5 @@ module.exports = {
             test.ok(true);
             callback(null, env);
         };
-    },
-    
-    initialize: function(_test) {
-        test = _test;
     }
 };

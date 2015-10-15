@@ -1,0 +1,5 @@
+{
+  "base": "./html/",
+  "port": 8080,
+  "logfile": "stderr"
+}

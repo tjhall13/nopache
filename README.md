@@ -45,25 +45,26 @@ With Nopache v0.9.0 and later, anyone can write a simple plugin for the Nopache 
 ### Plugin Creation
 To create a plugin just make a js file or node package that when imported exposes any of the 5 functions to register hooks. Those functions are:
 
--   ```register_initialize_hook(config, arg)```
--   ```register_request_hook(config)```
--   ```register_access_hooks(config)```
--   ```register_process_hooks(config)```
--   ```register_response_hook(config)```
+-   `initialize(config, arg)`
+-   `register_request_hook(config)`
+-   `register_access_hooks(config)`
+-   `register_process_hooks(config)`
+-   `register_response_hook(config)`
 
 Each function will be provided the configuration variable used to configure the server and the initialize function is given a special argument which is the value in the mods key-value pairs.
 
-#### ```register_initialize_hook(config, arg)```
+#### `initialize(config, arg)`
 Called at the start up of the server to initialize the plugin.  Is given the value in the mod declaration as the arg parameter.
 
-#### ```register_request_hook(config)```
-This function must return a function with the signature: ```handler(env, callback)``` where env is the current request environment with relevant data. callback *MUST* be called as ```callback(err, data)```.  If err is not null, the server will respond with error 500.  The data parameter must be the env variable.
+#### `register_request_hook(config)`
+This function must return a function with the signature: `handler(env, callback)` where env is the current request environment with relevant data. callback *MUST* be called as `callback(err, data)`.  If err is not null, the server will respond with error 500.  The data parameter must be the env variable.
 
-#### ```register_access_hooks(config)```
-This function must return a key-value map of htaccess file commands and handlers.  Each handler will get called when the coresponding command is given in an htaccess file with the env parameter.  ```this``` will be set to a separate context for each module that is mutable for the lifetime of the request.
+#### `register_access_hooks(config)`
+This function must return a key-value map of htaccess file commands and handlers.  Each handler will get called when the coresponding command is given in an htaccess file with the env parameter.  `this` will be set to a separate context for each module that is mutable for the lifetime of the request.
 
-#### ```register_process_hooks(config)```
-This function must return an array of objects with the key ```regex```; value equal to a ```RegExp``` and with the key ```handler```; value equal to a function with the signature ```function(env, callback)```.  Example:
+#### `register_process_hooks(config)`
+This function must return an array of objects with the key `regex`; value equal to a `RegExp` and with the key `handler`; value equal to a function with the signature `function(env, callback)`.
+Example:
 ```javascript
 {
     regex: new RegExp('^test.+regex$'),
@@ -73,15 +74,15 @@ This function must return an array of objects with the key ```regex```; value eq
         return true;
     }
 }
-
 ```
-This function must return true if it chooses to process the request otherwise it *MUST* return false.  If it does handle the request it must call the callback with the same rules as the ```request_hook```.
 
-#### ```register_response_hook(config)```
-This must return a function to which will be called after the request has been processed.  The rules for the returned handler is identical to ```register_request_hook```.
+This function must return true if it chooses to process the request otherwise it *MUST* return false.  If it does handle the request it must call the callback with the same rules as the `request_hook`.
+
+#### `register_response_hook(config)`
+This must return a function to which will be called after the request has been processed.  The rules for the returned handler is identical to `register_request_hook`.
 
 ## Contributed Plugins
-### ```mock```
+### `mock`
 Mock provides an easy way to mock entire requests.  It simply requires an object or path to a file to include as an object for the mock interface.  Mocks can be static, selected from an array of possible responses based on the request data or a simple function that returns the relevant data.
 
 #### Mock Interface
