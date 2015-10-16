@@ -75,14 +75,22 @@ if(cli.options.config) {
     
     if(fs.existsSync(configFile)) {
         config = JSON.parse(fs.readFileSync(configFile));
-        if(config.mods) {
-            mods = config.mods;
-            delete config.mods;
-        }
     } else {
         console.error('Nopache configuration file cannot be found: ' + configFile);
         console.log('Using defaults...');
     }
+} else {
+    var configFile = process.cwd() + '/nopache.json';
+    console.log(configFile);
+    
+    if(fs.existsSync(configFile)) {
+        config = JSON.parse(fs.readFileSync(configFile));
+    }
+}
+
+if(config.mods) {
+    mods = config.mods;
+    delete config.mods;
 }
 
 if(cli.options.base) {
