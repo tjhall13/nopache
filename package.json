@@ -1,12 +1,14 @@
 {
   "name": "nopache",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Nopache is a light weight webserver with the ability to easily configure options and plugin modules",
   "main": "index.js",
   "bin": {
     "nopache": "bin/nopache"
   },
   "dependencies": {
+    "minimatch": "^3.0.0",
+    "nopt": "^3.0.4",
     "sync": "^0.2.5"
   },
   "devDependencies": {
