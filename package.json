@@ -1,6 +1,6 @@
 {
   "name": "nopache",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Nopache is a light weight webserver with the ability to easily configure options and plugin modules",
   "main": "index.js",
   "bin": {
